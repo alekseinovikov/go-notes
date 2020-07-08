@@ -6,20 +6,22 @@ import (
 )
 
 type noteServiceState struct {
-	notes map[int64]model.Note
-	lastId int64
-
+	notes  map[int64]model.Note
+	lastId *int64
 }
 
 type NoteService interface {
 	FindAll() []model.Note
 	Add(createRequest model.NoteCreateRequest) model.Note
+	Delete(id int64)
+	Get(id int64) model.Note
 }
 
 func NewNoteService() NoteService {
+	var initId int64 = 0
 	return noteServiceState{
-		notes: make(map[int64]model.Note),
-		lastId: 0,
+		notes:  make(map[int64]model.Note),
+		lastId: &initId,
 	}
 }
 
@@ -32,19 +34,29 @@ func (it noteServiceState) FindAll() []model.Note {
 	return values
 }
 
+func (it noteServiceState) Get(id int64) model.Note {
+	return it.notes[id]
+}
+
 func (it noteServiceState) Add(request model.NoteCreateRequest) model.Note {
 	newId := it.getNextId()
 
 	newNote := model.Note{
-		Id: newId,
-		Title: request.Title,
-		Content: request.Content
+		Id:      newId,
+		Title:   request.Title,
+		Content: request.Content,
 	}
 
+	it.notes[newId] = newNote
+	return newNote
+}
+
+func (it noteServiceState) Delete(id int64) {
+	delete(it.notes, id)
 }
 
 func (it noteServiceState) getNextId() int64 {
-	return atomic.AddInt64(&it.lastId, 1)
+	return atomic.AddInt64(it.lastId, 1)
 }
 
 func (it noteServiceState) addNote(note model.Note) {

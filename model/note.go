@@ -1,12 +1,12 @@
 package model
 
 type Note struct {
-	Id      int64
-	Title   string
-	Content string
+	Id      int64  `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 type NoteCreateRequest struct {
-	Title   string
-	Content string
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
