@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/alekseinovikov/go-notes/errors"
 	"github.com/alekseinovikov/go-notes/model"
 	"sync/atomic"
 )
@@ -14,7 +15,7 @@ type NoteService interface {
 	FindAll() []model.Note
 	Add(createRequest model.NoteCreateRequest) model.Note
 	Delete(id int64)
-	Get(id int64) model.Note
+	FindById(id int64) (model.Note, errors.NoteError)
 }
 
 func NewNoteService() NoteService {
@@ -34,8 +35,13 @@ func (it noteServiceState) FindAll() []model.Note {
 	return values
 }
 
-func (it noteServiceState) Get(id int64) model.Note {
-	return it.notes[id]
+func (it noteServiceState) FindById(id int64) (model.Note, errors.NoteError) {
+	note, found := it.notes[id]
+	if !found {
+		return model.Note{}, errors.NotFoundError
+	}
+
+	return note, nil
 }
 
 func (it noteServiceState) Add(request model.NoteCreateRequest) model.Note {
