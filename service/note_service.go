@@ -4,12 +4,10 @@ import (
 	"github.com/alekseinovikov/go-notes/errors"
 	"github.com/alekseinovikov/go-notes/model"
 	"github.com/alekseinovikov/go-notes/repository"
-	"sync/atomic"
 )
 
 type noteServiceState struct {
 	noteRepository repository.NoteRepository
-	notes          map[int64]model.Note
 	lastId         *int64
 }
 
@@ -21,53 +19,58 @@ type NoteService interface {
 }
 
 func NewNoteService(noteRepository repository.NoteRepository) NoteService {
-	var initId int64 = 0
 	return noteServiceState{
 		noteRepository: noteRepository,
-		notes:          make(map[int64]model.Note),
-		lastId:         &initId,
 	}
 }
 
 func (it noteServiceState) FindAll() []model.Note {
-	values := make([]model.Note, 0, len(it.notes))
-	for _, v := range it.notes {
-		values = append(values, v)
-	}
-
-	return values
+	entities := it.noteRepository.FindAll()
+	return convertEntities(entities)
 }
 
 func (it noteServiceState) FindById(id int64) (model.Note, errors.NoteError) {
-	note, found := it.notes[id]
+	entity, found := it.noteRepository.FindById(id)
 	if !found {
 		return model.Note{}, errors.NotFoundError
 	}
 
-	return note, nil
+	return convertEntityToModel(entity), nil
 }
 
 func (it noteServiceState) Add(request model.NoteCreateRequest) model.Note {
-	newId := it.getNextId()
+	entity := convertAddRequestToEntity(request)
+	savedEntity := it.noteRepository.Save(entity)
 
-	newNote := model.Note{
-		Id:      newId,
-		Title:   request.Title,
-		Content: request.Content,
-	}
-
-	it.notes[newId] = newNote
-	return newNote
+	return convertEntityToModel(savedEntity)
 }
 
 func (it noteServiceState) Delete(id int64) {
-	delete(it.notes, id)
+	it.noteRepository.Delete(id)
 }
 
-func (it noteServiceState) getNextId() int64 {
-	return atomic.AddInt64(it.lastId, 1)
+func convertEntities(entities []repository.NoteEntity) []model.Note {
+	result := make([]model.Note, 0)
+
+	for _, entity := range entities {
+		note := convertEntityToModel(entity)
+		result = append(result, note)
+	}
+
+	return result
 }
 
-func (it noteServiceState) addNote(note model.Note) {
-	it.notes[note.Id] = note
+func convertEntityToModel(noteEntity repository.NoteEntity) model.Note {
+	return model.Note{
+		Id:      noteEntity.ID,
+		Title:   noteEntity.Title,
+		Content: noteEntity.Content,
+	}
+}
+
+func convertAddRequestToEntity(request model.NoteCreateRequest) repository.NoteEntity {
+	return repository.NoteEntity{
+		Title:   request.Title,
+		Content: request.Content,
+	}
 }

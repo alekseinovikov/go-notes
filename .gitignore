@@ -19,3 +19,4 @@ go.sum
 go-notes
 .idea
 go-notes.iml
+note.db

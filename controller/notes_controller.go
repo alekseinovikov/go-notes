@@ -17,6 +17,7 @@ func InitNotesController(router *mux.Router, nService service.NoteService) {
 	router.Path("").Methods("GET").HandlerFunc(listHandler)
 	router.Path("").Methods("POST").HandlerFunc(addHandler)
 	router.Path("/{id:[0-9]+}").Methods("GET").HandlerFunc(getByIdHandler)
+	router.Path("/{id:[0-9]+}").Methods("DELETE").HandlerFunc(deleteHandler)
 }
 
 func listHandler(writer http.ResponseWriter, request *http.Request) {
@@ -24,6 +25,16 @@ func listHandler(writer http.ResponseWriter, request *http.Request) {
 
 	notes := noteService.FindAll()
 	WriteAsJson(notes, writer)
+}
+
+func deleteHandler(writer http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	id, err := strconv.ParseInt(vars["id"], 10, 64)
+	if nil != err {
+		log.Fatal(err)
+	}
+
+	noteService.Delete(id)
 }
 
 func addHandler(writer http.ResponseWriter, request *http.Request) {
