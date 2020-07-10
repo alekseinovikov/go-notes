@@ -3,12 +3,14 @@ package service
 import (
 	"github.com/alekseinovikov/go-notes/errors"
 	"github.com/alekseinovikov/go-notes/model"
+	"github.com/alekseinovikov/go-notes/repository"
 	"sync/atomic"
 )
 
 type noteServiceState struct {
-	notes  map[int64]model.Note
-	lastId *int64
+	noteRepository repository.NoteRepository
+	notes          map[int64]model.Note
+	lastId         *int64
 }
 
 type NoteService interface {
@@ -18,11 +20,12 @@ type NoteService interface {
 	FindById(id int64) (model.Note, errors.NoteError)
 }
 
-func NewNoteService() NoteService {
+func NewNoteService(noteRepository repository.NoteRepository) NoteService {
 	var initId int64 = 0
 	return noteServiceState{
-		notes:  make(map[int64]model.Note),
-		lastId: &initId,
+		noteRepository: noteRepository,
+		notes:          make(map[int64]model.Note),
+		lastId:         &initId,
 	}
 }
 

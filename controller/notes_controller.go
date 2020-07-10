@@ -9,9 +9,11 @@ import (
 	"strconv"
 )
 
-var noteService = service.NewNoteService()
+var noteService service.NoteService
 
-func InitNotesController(router *mux.Router) {
+func InitNotesController(router *mux.Router, nService service.NoteService) {
+	noteService = nService
+
 	router.Path("").Methods("GET").HandlerFunc(listHandler)
 	router.Path("").Methods("POST").HandlerFunc(addHandler)
 	router.Path("/{id:[0-9]+}").Methods("GET").HandlerFunc(getByIdHandler)
